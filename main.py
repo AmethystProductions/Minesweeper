@@ -6,12 +6,14 @@ minesCount = 0
 flags = []
 size = 0
 
+
 def Init():
     """
     Initialisation, in case if I want to implement save game function
     """
     ClearAll()
     return
+
 
 def GameLoop():
     """
@@ -32,7 +34,8 @@ def GameLoop():
                 CalculateHit(int(IN[0]), int(IN[1]))
         except:
             print("Please input data in the correct format.")
-    DisplayGrid()
+    DisplayGrid() # Thinking that I should maybe display grid before the warning texts
+
 
 def GenerateMines():
     """
@@ -44,7 +47,8 @@ def GenerateMines():
         x = math.floor(i / size)
         y = i % size
         mines.append((x,y))
-    print(mines)
+    print(mines) #DEBUG
+
 
 def GenerateGrid():
     """
@@ -53,40 +57,60 @@ def GenerateGrid():
     global grid
     grid = [["o" for i in range(size)] for j in range(size)]
 
+
 def Flag(x, y):
     """
     Flags a location so that it can't be hit be mines
     Use it again on the same location to unflag it
     """
+    global grid
     if (x, y) in flags:
         flags.remove(x, y)
+        grid[x][y] = "o"
     else:
         flags.append(x, y)
+        grid[x][y] = "f"
 
 
 def CalculateHit(x, y):
     """
     Check if the position is a mine or flagged, if not, calculate what to reveal
     """
+    global grid
     if (x, y) in flags:
         print("That position is flagged, you must unflag it first!")
-    elif (x,y) in mines:
-        Die()
+    elif (x, y) in mines:
+        Die(x, y)
     else:
+        
         # Calcucate proximity to mines here
         print("")
 
-def Die():
+def Die(x, y):
     """
     When the player hits a mine, the game ends
     """
+    global grid
+    for i in size:
+        for j in size:
+            if (i, j) in mines:
+                if (i, j) in flags:
+                    grid[i][j] = "F" # Flagged Mine
+                else:
+                    grid[i][j] = "M" # Unflagged Mine
+    grid[x][y] = "X" # Death Hit
+    print("X is the hit, M is unflagged mine, F is flagged mine")
+    print("DEBUG: You hit a mine!") #DEBUG
     return
+
 
 def Win():
     """
     When the player sucessfully reveals all the tiles without mines, they win
     """
+    print("DEBUG: YOU WIN!") #DEBUG
     return
+
 
 def DisplayGrid():
     """
@@ -106,6 +130,7 @@ def DisplayGrid():
         gridDisplay += "\n"
     print(gridDisplay)
 
+
 def ClearAll():
     """
     Clear all global variables
@@ -114,6 +139,7 @@ def ClearAll():
     grid = mines, flags = []
     minesCount = size = 0
 
+
 def GetXY():
     """
     Gets the input and splits them into array
@@ -121,6 +147,7 @@ def GetXY():
     IN = input()
     IN = IN.split() # Splits by all whitespace chunks
     return IN
+
 
 
 while True:
