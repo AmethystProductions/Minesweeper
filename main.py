@@ -7,6 +7,9 @@ flags = []
 size = 0
 
 def Init():
+    """
+    Initialisation, in case if I want to implement save game function
+    """
     ClearAll()
     return
 
@@ -22,6 +25,8 @@ def GameLoop():
         try:
             IN = GetXY()
             if len(IN) >= 3 and IN[3] == 'f':
+                # I don't actually care if the user submits more than 3 values
+                # I might change it to be stricter in the future
                 Flag(int(IN[0]), int(IN[1]))
             else:
                 CalculateHit(int(IN[0]), int(IN[1]))
@@ -60,6 +65,9 @@ def Flag(x, y):
 
 
 def CalculateHit(x, y):
+    """
+    Check if the position is a mine or flagged, if not, calculate what to reveal
+    """
     if (x, y) in flags:
         print("That position is flagged, you must unflag it first!")
     elif (x,y) in mines:
@@ -69,10 +77,21 @@ def CalculateHit(x, y):
         print("")
 
 def Die():
+    """
+    When the player hits a mine, the game ends
+    """
     return
 
+def Win():
+    """
+    When the player sucessfully reveals all the tiles without mines, they win
+    """
+    return
 
 def DisplayGrid():
+    """
+    Displays the current gamestate, with numbers on the side to help keep track
+    """
     gridDisplay = ""
     padding = len(str(size))+1
     for i in range(size+1):
@@ -88,19 +107,24 @@ def DisplayGrid():
     print(gridDisplay)
 
 def ClearAll():
-    grid = []
-    mines = []
-    hit = []
-    return
+    """
+    Clear all global variables
+    """
+    global grid, mines, flags, minesCount, size
+    grid = mines, flags = []
+    minesCount = size = 0
 
 def GetXY():
+    """
+    Gets the input and splits them into array
+    """
     IN = input()
-    IN = list(map(lambda x: x.strip(), IN.split(" ")))
+    IN = IN.split() # Splits by all whitespace chunks
     return IN
 
 
 while True:
-    print("size mines")
+    print("Input the size of the map and the amount of mines: 'size mines'")
     IN = GetXY()
     size = int(IN[0])
     minesCount = int(IN[1])
