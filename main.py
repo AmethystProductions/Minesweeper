@@ -5,6 +5,7 @@ mines = []
 minesCount = 0
 flags = []
 size = 0
+firstClick = True
 
 
 def Init():
@@ -19,19 +20,21 @@ def GameLoop():
     """
     The Main game loops, handles inputs and passes them on to the necessary calculations
     """
-    GenerateMines()
     GenerateGrid()
     while True:
         DisplayGrid()
         print("Input location: 'x y' to sweep OR 'x y f' to flag")
         try:
             IN = GetXY()
-            if len(IN) >= 3 and IN[3] == 'f':
+            IN[0], IN[1] = int(IN[0]), int(IN[1])
+            if firstClick:
+                GenerateMines((IN[0], IN[1]))
+            if len(IN) >= 3 and IN[2] == 'f':
                 # I don't actually care if the user submits more than 3 values
                 # I might change it to be stricter in the future
-                Flag(int(IN[0]), int(IN[1]))
+                Flag(IN[0], IN[1])
             else:
-                CalculateHit(int(IN[0]), int(IN[1]))
+                CalculateHit(IN[0], IN[1])
         except:
             print("Please input data in the correct format.")
         if IN == []: #DEBUG
@@ -39,17 +42,28 @@ def GameLoop():
     DisplayGrid() # Thinking that I should maybe display grid before the warning texts
 
 
-def GenerateMines():
+def GenerateMines(firstClickXY):
     """
     Generate the mines accoring to `size`^2 and `minesCount`
     Stored as an array of tuples in `mines`
+    Occurs upon user picking a spot
     """
+    global firstClick
     rand = random.sample(range(0, size**2-1), minesCount)
     for i in rand:
         x = math.floor(i / size)
         y = i % size
         mines.append((x,y))
+    userClickAdjuctmentXY = firstClickXY
+    while True:
+        if userClickAdjuctmentXY not in mines:
+            break
+        rand = random.randrange(0, size**2-1)
+        userClickAdjuctmentXY = (math.floor(rand / size), rand % size)
+    mines.remove(firstClickXY)
+    mines.append(userClickAdjuctmentXY)
     print(mines) #DEBUG
+    firstClick = False
 
 
 def GenerateGrid():
