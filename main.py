@@ -34,6 +34,8 @@ def GameLoop():
                 CalculateHit(int(IN[0]), int(IN[1]))
         except:
             print("Please input data in the correct format.")
+        if IN == []: #DEBUG
+            break
     DisplayGrid() # Thinking that I should maybe display grid before the warning texts
 
 
@@ -82,9 +84,30 @@ def CalculateHit(x, y):
     elif (x, y) in mines:
         Die(x, y)
     else:
-        
-        # Calcucate proximity to mines here
-        print("")
+        GetSurroundingMines(x, y)
+
+
+def GetSurroundingMines(x, y):
+    """
+    Get how many mines are surrounding the current position
+    If this is completely clear then recursively get the numbers for the surrounding mines
+    """
+    print("Find surrounding:", x, y)
+    surroundingMines = 0
+    sx, sy = max(x-1, 0),       max(y-1, 0)     # Start X,  Start Y
+    ex, ey = min(x+2, size),    min(y+2, size)  # End X,    End Y
+
+    for i in range(sx, ex):
+        for j in range(sy, ey):
+            surroundingMines += (i, j) in mines 
+
+    grid[x][y] = surroundingMines or "."
+    if surroundingMines == 0:
+        for i in range(sx, ex):
+            for j in range(sy, ey):
+                if grid[i][j] == "o":
+                    GetSurroundingMines(i, j)
+
 
 def Die(x, y):
     """
