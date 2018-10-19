@@ -26,7 +26,7 @@ def GameLoop():
         print("Input location: 'x y' to sweep OR 'x y f' to flag")
         try:
             IN = GetXY()
-            IN[0], IN[1] = int(IN[0]) - 1, int(IN[1]) - 1 
+            IN[0], IN[1] = int(IN[1]) - 1, int(IN[0]) - 1  # Flipped so that coding with it makes more sense (because grid[y][x] would be the more correct one)
             if firstClick:
                 GenerateMines((IN[0], IN[1]))
             if len(IN) >= 3 and IN[2] == 'f':
@@ -75,10 +75,10 @@ def GenerateMines(firstClickXY):
 
 def GenerateGrid():
     """
-    Generate a matrix of "o" with size `size`
+    Generate a matrix of "O" with size `size`
     """
     global grid
-    grid = [["o" for i in range(size)] for j in range(size)]
+    grid = [["O" for i in range(size)] for j in range(size)]
 
 
 def Flag(x, y):
@@ -90,8 +90,8 @@ def Flag(x, y):
     global grid
     if (x, y) in flags:
         flags.remove((x, y))
-        grid[x][y] = "o"
-    elif grid[x][y] == "o":
+        grid[x][y] = "O"
+    elif grid[x][y] == "O":
         flags.append((x, y))
         grid[x][y] = "f"
 
@@ -131,7 +131,7 @@ def GetSurroundingMines(x, y):
         for i in range(sx, ex):
             for j in range(sy, ey):
                 # Only do it if they haven't been opened up alreadys
-                if grid[i][j] == "o":
+                if grid[i][j] == "O":
                     GetSurroundingMines(i, j)
 
 
