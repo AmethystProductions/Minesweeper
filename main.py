@@ -26,7 +26,7 @@ def GameLoop():
         print("Input location: 'x y' to sweep OR 'x y f' to flag")
         try:
             IN = GetXY()
-            IN[0], IN[1] = int(IN[0]), int(IN[1])
+            IN[0], IN[1] = int(IN[0]) - 1, int(IN[1]) - 1 
             if firstClick:
                 GenerateMines((IN[0], IN[1]))
             if len(IN) >= 3 and IN[2] == 'f':
@@ -67,7 +67,7 @@ def GenerateMines(firstClickXY):
     # For each value generated, split it into x and y values and store it in `mines` global array
     # x: Which column, gotten through remainder of size / value
     # y: Which row, how many times does size divide into value 
-    mines = list(map(lambda value: value%size, math.floor(value/size), rand))
+    mines = list(map(lambda value: (value%size, math.floor(value/size)), rand))
 
     print(mines) #DEBUG
     firstClick = False
