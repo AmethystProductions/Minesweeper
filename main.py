@@ -1,12 +1,8 @@
 import random
 import math
-grid = []
-mines = []
-minesCount = 0
-flags = []
-size = 0
+grid = mines = flags = history = []
+minesCount = size = sweeped = 0
 firstClick = True
-
 
 def Init():
     """
@@ -25,8 +21,14 @@ def GameLoop():
         DisplayGrid()
         print("Input location: 'x y' to sweep OR 'x y f' to flag")
         try:
-            IN = GetXY()
-            IN[0], IN[1] = int(IN[1]) - 1, int(IN[0]) - 1  # Flipped so that coding with it makes more sense (because grid[y][x] would be the more correct one)
+            IN = GetXY()[:2]
+            
+            # Stores all user input history
+            history.append(IN) 
+
+            # Flipped so that coding with it makes more sense (because grid[y][x] would be the correct one)
+            IN[0], IN[1] = int(IN[1]) - 1, int(IN[0]) - 1 
+            
             if firstClick:
                 GenerateMines((IN[0], IN[1]))
             if len(IN) >= 3 and IN[2] == 'f':
@@ -35,11 +37,13 @@ def GameLoop():
                 Flag(IN[0], IN[1])
             else:
                 CalculateHit(IN[0], IN[1])
+            if size**2 - sweeped == minesCount:
+                Win()
         except:
             print("Please input data in the correct format.")
         if IN == []: #DEBUG
             break
-    DisplayGrid() # Thinking that I should maybe display grid before the warning texts
+    # DisplayGrid() # Thinking that I should maybe display grid before the warning texts
 
 
 def GenerateMines(firstClickXY):
@@ -48,8 +52,7 @@ def GenerateMines(firstClickXY):
     Stored as an array of tuples in `mines`
     Occurs upon user picking a spot
     """
-    global firstClick
-    global mines
+    global firstClick, mines
 
     # Generate a list of numbers from 0 up to the grid size
     generationRange = list(range(0, size**2-1))
@@ -75,10 +78,10 @@ def GenerateMines(firstClickXY):
 
 def GenerateGrid():
     """
-    Generate a matrix of "O" with size `size`
+    Generate a matrix of "o" with size `size`
     """
     global grid
-    grid = [["O" for i in range(size)] for j in range(size)]
+    grid = [["o" for i in range(size)] for j in range(size)]
 
 
 def Flag(x, y):
@@ -86,14 +89,15 @@ def Flag(x, y):
     Flags a location so that it can't be hit be mines
     Use it again on the same location to unflag it
     """
-    global flags
-    global grid
+    global flags, grid
     if (x, y) in flags:
         flags.remove((x, y))
-        grid[x][y] = "O"
-    elif grid[x][y] == "O":
+        grid[x][y] = "o"
+    elif grid[x][y] == "o":
         flags.append((x, y))
         grid[x][y] = "f"
+    else:
+        print("That spot has already been revealed!")
 
 
 def CalculateHit(x, y):
@@ -114,6 +118,10 @@ def GetSurroundingMines(x, y):
     Get how many mines are surrounding the current position
     If this is completely clear then recursively get the numbers for the surrounding mines
     """
+    global sweeped
+    if grid[x][y] == "o":
+        sweeped += 1
+
     surroundingMines = 0
     sx, sy = max(x-1, 0),       max(y-1, 0)     # Start X,  Start Y
     ex, ey = min(x+2, size),    min(y+2, size)  # End X,    End Y
@@ -131,7 +139,7 @@ def GetSurroundingMines(x, y):
         for i in range(sx, ex):
             for j in range(sy, ey):
                 # Only do it if they haven't been opened up alreadys
-                if grid[i][j] == "O":
+                if grid[i][j] == "o":
                     GetSurroundingMines(i, j)
 
 
@@ -144,13 +152,12 @@ def Die(x, y):
         if mine in flags:
             grid[mine[0]][mine[1]] = "F" # Flagged Mine
         else:
-            grid[mine[0]][mine[2]] = "M" # Unflagged Mine
+            grid[mine[0]][mine[1]] = "M" # Unflagged Mine
     
     grid[x][y] = "X" # Death Hit
     print("X is the hit, M is unflagged mine, F is flagged mine")
     print("DEBUG: You hit a mine!") #DEBUG
     return
-
 
 def Win():
     """
@@ -188,9 +195,10 @@ def ClearAll():
     """
     Clear all global variables
     """
-    global grid, mines, flags, minesCount, size
-    grid = mines, flags = []
+    global grid, mines, flags, minesCount, size, firstClick, history
+    grid = mines = flags = history = []
     minesCount = size = 0
+    firstClick = True
 
 
 def GetXY():
@@ -204,6 +212,8 @@ def GetXY():
 
 
 while True:
+    Init()
+
     print("Input the size of the map and the amount of mines: 'size mines'")
     IN = GetXY()
     size = int(IN[0])
