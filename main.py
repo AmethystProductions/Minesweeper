@@ -3,6 +3,7 @@ import math
 grid = mines = flags = history = []
 minesCount = size = sweeped = 0
 firstClick = True
+gameEnded = False
 
 def Init():
     """
@@ -17,11 +18,11 @@ def GameLoop():
     The Main game loops, handles inputs and passes them on to the necessary calculations
     """
     GenerateGrid()
-    while True:
+    while not gameEnded:
         DisplayGrid()
-        print("Input location: 'x y' to sweep OR 'x y f' to flag")
+        print("Input location: 'x y' (numbers) to sweep OR 'x y f' to flag OR 'x y s' to sweep surrounding 3x3 tiles")
         try:
-            IN = GetXY()[:2]
+            IN = GetXY()[:3]
             
             # Stores all user input history
             history.append(IN) 
@@ -35,8 +36,13 @@ def GameLoop():
                 # I don't actually care if the user submits more than 3 values
                 # I might change it to be stricter in the future
                 Flag(IN[0], IN[1])
+            elif len(IN) >= 3 and IN[2] == 's':
+                Sweep(IN[0], IN[1])
             else:
-                CalculateHit(IN[0], IN[1])
+                if (IN[0], IN[1]) in flags:
+                    print("That position is flagged, you must unflag it first!")
+                else:
+                    CalculateHit(IN[0], IN[1])
             if size**2 - sweeped == minesCount:
                 Win()
         except:
@@ -57,12 +63,13 @@ def GenerateMines(firstClickXY):
     # Generate a list of numbers from 0 up to the grid size
     generationRange = list(range(0, size**2-1))
 
-    # Convert the value of the first click into an integer value within the mines generation range
-    firstClickXY = firstClickXY[0] + firstClickXY[1] * size
+    sx, sy, ex, ey = FindSurroundingTiles(firstClickXY[0], firstClickXY[1])
 
-    # Then remove it from the genration range, to prevent first click error
-    generationRange.remove(firstClickXY)
-
+    # Ensure the first click is always a 0, by removing the 3x3 values around it from the number range
+    for i in range(sx, ex):
+        for j in range(sy, ey):
+            generationRange.remove(i + j * size)
+    
     # Generate a random sample of values 
     # Based on the mines amount that the player dictated at the beginning of the game
     rand = random.sample(generationRange, minesCount)
@@ -100,14 +107,40 @@ def Flag(x, y):
         print("That spot has already been revealed!")
 
 
+def Sweep(x, y):
+    """
+    Select an already open arean, and sweep it to allow for many blocks to be allowed at once
+    """
+    if grid[x][y] == "o" or grid[x][y] == "f" or grid[x][y] == ".":
+        print("Cannot perform sweep on that tile.")
+        return
+
+    sx, sy, ex, ey = FindSurroundingTiles(x, y)
+    
+    flaggedTiles = 0
+    
+    # Sweep the surrounding area
+    for i in range(sx, ex):
+        for j in range(sy, ey):
+            if grid[i][j] == "f":
+                flaggedTiles += 1
+
+    # See if the player flagged the enough amount
+    if flaggedTiles >= int(grid[x][y]):
+        for i in range(sx, ex):
+            for j in range(sy, ey):
+                CalculateHit(i, j)
+    else:
+        print("You must have flagged tiles greater or equal to the possible mines in the area.")
+
+    
+
 def CalculateHit(x, y):
     """
     Check if the position is a mine or flagged, if not, calculate what to reveal
     """
     global grid
-    if (x, y) in flags:
-        print("That position is flagged, you must unflag it first!")
-    elif (x, y) in mines:
+    if (x, y) in mines:
         Die(x, y)
     else:
         GetSurroundingMines(x, y)
@@ -123,8 +156,8 @@ def GetSurroundingMines(x, y):
         sweeped += 1
 
     surroundingMines = 0
-    sx, sy = max(x-1, 0),       max(y-1, 0)     # Start X,  Start Y
-    ex, ey = min(x+2, size),    min(y+2, size)  # End X,    End Y
+
+    sx, sy, ex, ey = FindSurroundingTiles(x, y)
 
     # Check if any surrounding tile is a mine
     for i in range(sx, ex):
@@ -147,7 +180,7 @@ def Die(x, y):
     """
     When the player hits a mine, the game ends
     """
-    global grid
+    global grid, gameEnded
     for mine in mines:
         if mine in flags:
             grid[mine[0]][mine[1]] = "F" # Flagged Mine
@@ -157,14 +190,22 @@ def Die(x, y):
     grid[x][y] = "X" # Death Hit
     print("X is the hit, M is unflagged mine, F is flagged mine")
     print("DEBUG: You hit a mine!") #DEBUG
-    return
+
+    gameEnded = True
+
 
 def Win():
     """
     When the player sucessfully reveals all the tiles without mines, they win
     """
-    print("DEBUG: YOU WIN!") #DEBUG
-    return
+    global gameEnded
+    print("""
+    ---------------------------------------
+    YOU WIN!!!
+    ---------------------------------------
+    """)
+
+    gameEnded = True
 
 
 def DisplayGrid():
@@ -195,10 +236,11 @@ def ClearAll():
     """
     Clear all global variables
     """
-    global grid, mines, flags, minesCount, size, firstClick, history
+    global grid, mines, flags, minesCount, size, firstClick, history, gameEnded
     grid = mines = flags = history = []
     minesCount = size = 0
     firstClick = True
+    gameEnded = False
 
 
 def GetXY():
@@ -210,6 +252,12 @@ def GetXY():
     return IN
 
 
+def FindSurroundingTiles(x, y):
+    """
+    Find the surrounding 3x3 tiles, but within the bounding box
+    """
+    return [max(x-1, 0), max(y-1, 0), min(x+2, size), min(y+2, size)]  # Start X, End X, Start Y, End Y
+
 
 while True:
     Init()
@@ -218,9 +266,10 @@ while True:
     IN = GetXY()
     size = int(IN[0])
     minesCount = int(IN[1])
-
     GameLoop()
-    
+    print("\nTHIS IS THE FINAL BOARDSTATE\n")
+    DisplayGrid()
+
     print("Do you want to restart? y/n")
     IN = input()
     if IN.lower() != "y":
