@@ -106,7 +106,7 @@ def Flag(x, y):
     else:
         print("That spot has already been revealed!")
 
-
+        
 def Sweep(x, y):
     """
     Select an already open arean, and sweep it to allow for many blocks to be allowed at once
@@ -140,7 +140,7 @@ def CalculateHit(x, y):
     Check if the position is a mine or flagged, if not, calculate what to reveal
     """
     global grid
-    if (x, y) in mines:
+    if (x, y) in mines and grid[x][y] != "f":
         Die(x, y)
     else:
         GetSurroundingMines(x, y)
